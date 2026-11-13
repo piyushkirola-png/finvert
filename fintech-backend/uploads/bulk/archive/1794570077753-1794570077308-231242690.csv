@@ -1,6 +1,0 @@
-amount,currency,merchantReference,paymentMode,customerName,customerEmail,customerPhone,cardNumber,expiryMonth,expiryYear,cvv,cardHolderName
-2800,INR,PAYIN-CSV-18239,UPI,Sanjay Joshi,sanjay.joshi@example.com,"8605436311",,,,,
-2700,INR,PAYIN-CSV-18240,CARD,Rohan Iyer,rohan.iyer@example.com,"8798327139","4012888888881881","12","2028","931","Rohan Iyer"
-4500,INR,PAYIN-CSV-18241,CARD,Pooja Nair,pooja.nair@example.com,"9689429511","2223003122003222","08","2029","975","Pooja Nair"
-2000,INR,PAYIN-CSV-18242,UPI,Divya Nair,divya.nair@example.com,"7118731863",,,,,
-1500,INR,PAYIN-CSV-18243,CARD,Pooja Joshi,pooja.joshi64@example.com,"9142953032","6011111111111117","04","2031","314","Pooja Joshi"

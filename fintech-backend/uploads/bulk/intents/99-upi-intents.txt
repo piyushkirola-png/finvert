@@ -1,5 +1,0 @@
-http://localhost:4100/pay/PAYIN-CSV-18380
-http://localhost:4100/pay/PAYIN-CSV-18382
-http://localhost:4100/pay/PAYIN-CSV-18384
-http://localhost:4100/pay/PAYIN-CSV-18385
-http://localhost:4100/pay/PAYIN-CSV-18389

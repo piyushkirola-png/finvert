@@ -46,8 +46,10 @@ class PayoutWalletService {
 
       if (amountMin || amountMax) {
         where.amount = {};
-        if (amountMin) where.amount.gte = amountMin;
-        if (amountMax) where.amount.lte = amountMax;
+        if (amountMin !== undefined && amountMin !== null && amountMin !== "")
+          where.amount.gte = Number(amountMin);
+        if (amountMax !== undefined && amountMax !== null && amountMax !== "")
+          where.amount.lte = Number(amountMax);
       }
 
       if (startDate || endDate) {
@@ -56,9 +58,7 @@ class PayoutWalletService {
           where.transactionDate.gte = new Date(startDate);
         }
         if (endDate) {
-          const endDateTime = new Date(endDate);
-          endDateTime.setHours(23, 59, 59, 999);
-          where.transactionDate.lte = endDateTime;
+          where.transactionDate.lte = new Date(endDate);
         }
       }
 
@@ -196,8 +196,10 @@ class PayoutWalletService {
 
       if (amountMin || amountMax) {
         where.amount = {};
-        if (amountMin) where.amount.gte = amountMin;
-        if (amountMax) where.amount.lte = amountMax;
+        if (amountMin !== undefined && amountMin !== null && amountMin !== "")
+          where.amount.gte = Number(amountMin);
+        if (amountMax !== undefined && amountMax !== null && amountMax !== "")
+          where.amount.lte = Number(amountMax);
       }
 
       if (startDate || endDate) {
@@ -206,9 +208,7 @@ class PayoutWalletService {
           where.transactionDate.gte = new Date(startDate);
         }
         if (endDate) {
-          const endDateTime = new Date(endDate);
-          endDateTime.setHours(23, 59, 59, 999);
-          where.transactionDate.lte = endDateTime;
+          where.transactionDate.lte = new Date(endDate);
         }
       }
 

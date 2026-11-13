@@ -1,6 +1,25 @@
 const payoutWalletService = require("./payout-wallet.service");
 const prisma = require("../../../config/prisma");
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const parseDateParam = (val, isEnd = false) => {
+  if (!val) return null;
+  const str = String(val);
+  const isBare = /^\d{4}-\d{2}-\d{2}$/.test(str);
+  if (isBare) {
+    const [y, m, d] = str.split("-").map(Number);
+    const utcMidnightOfThatDay = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+    if (isEnd) {
+      return new Date(
+        utcMidnightOfThatDay + 24 * 60 * 60 * 1000 - IST_OFFSET_MS - 1,
+      );
+    }
+    return new Date(utcMidnightOfThatDay - IST_OFFSET_MS);
+  }
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
 // ADD MERCHANT VALIDATION
 const getWalletTransactions = async (req, res) => {
   try {
@@ -44,8 +63,8 @@ const getWalletTransactions = async (req, res) => {
       search,
       amountMin: amountMin ? parseFloat(amountMin) : undefined,
       amountMax: amountMax ? parseFloat(amountMax) : undefined,
-      startDate,
-      endDate,
+      startDate: parseDateParam(startDate, false),
+      endDate: parseDateParam(endDate, true),
     });
 
     res.status(200).json(result);
@@ -295,16 +314,8 @@ const exportTransactionsToCSV = async (req, res) => {
       }
     }
 
-    // Format dates properly
-    let formattedStartDate = startDate ? new Date(startDate) : null;
-    let formattedEndDate = endDate ? new Date(endDate) : null;
-
-    if (formattedStartDate) {
-      formattedStartDate.setHours(0, 0, 0, 0);
-    }
-    if (formattedEndDate) {
-      formattedEndDate.setHours(23, 59, 59, 999);
-    }
+    const formattedStartDate = parseDateParam(startDate, false);
+    const formattedEndDate = parseDateParam(endDate, true);
 
     const csvExportService = require("../csv-export/csv-export.service");
     const result = await csvExportService.requestCsvExport(

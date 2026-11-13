@@ -2,6 +2,24 @@ const payoutRequestsService = require("./payout-requests.service");
 const { validationResult } = require("express-validator");
 const prisma = require("../../../config/prisma");
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+const parseDateParam = (val, isEnd = false) => {
+  if (!val) return null;
+  const str = String(val);
+  const bare = /^\d{4}-\d{2}-\d{2}$/.test(str);
+  if (bare) {
+    const [y, m, d] = str.split("-").map(Number);
+    const utcMidnight = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+    if (isEnd) {
+      return new Date(utcMidnight + 24 * 60 * 60 * 1000 - IST_OFFSET_MS - 1);
+    }
+    return new Date(utcMidnight - IST_OFFSET_MS);
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 const redactVendorFields = (payoutRequest) => {
   if (!payoutRequest) return payoutRequest;
 
@@ -108,8 +126,8 @@ const findAll = async (req, res) => {
       feeType,
     } = req.query;
 
-    let formattedStartDate = startDate ? new Date(startDate) : null;
-    let formattedEndDate = endDate ? new Date(endDate) : null;
+    let formattedStartDate = parseDateParam(startDate, false);
+    let formattedEndDate = parseDateParam(endDate, true);
 
     // CHECK IF ANY NON-DATE FILTERS ARE APPLIED
     const hasNonDateFilters =
@@ -452,15 +470,8 @@ const exportCSV = async (req, res) => {
     }
 
     // Format dates - SET END OF DAY
-    let formattedStartDate = startDate ? new Date(startDate) : null;
-    let formattedEndDate = endDate ? new Date(endDate) : null;
-
-    if (formattedStartDate) {
-      formattedStartDate.setHours(0, 0, 0, 0);
-    }
-    if (formattedEndDate) {
-      formattedEndDate.setHours(23, 59, 59, 999);
-    }
+    const formattedStartDate = parseDateParam(startDate, false);
+    const formattedEndDate = parseDateParam(endDate, true);
 
     const csvExportService = require("../csv-export/csv-export.service");
     const result = await csvExportService.requestCsvExport(

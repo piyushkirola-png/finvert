@@ -60,10 +60,7 @@ class PayinWalletService {
           where.transactionDate.gte = new Date(startDate);
         }
         if (endDate) {
-          // Set to end of day
-          const endDateTime = new Date(endDate);
-          endDateTime.setHours(23, 59, 59, 999);
-          where.transactionDate.lte = endDateTime;
+          where.transactionDate.lte = new Date(endDate);
         }
       }
       // Run the count and the list at the same time
@@ -199,8 +196,12 @@ class PayinWalletService {
 
       if (startDate || endDate) {
         where.transactionDate = {};
-        if (startDate) where.transactionDate.gte = new Date(startDate);
-        if (endDate) where.transactionDate.lte = new Date(endDate);
+        if (startDate) {
+          where.transactionDate.gte = new Date(startDate);
+        }
+        if (endDate) {
+          where.transactionDate.lte = new Date(endDate);
+        }
       }
 
       const transactions = await prisma.payInWallet.findMany({

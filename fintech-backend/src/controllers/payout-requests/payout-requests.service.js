@@ -1214,9 +1214,14 @@ class PayoutRequestsService {
         {
           OR: [
             { metadata: { path: ["utr"], string_contains: filterOptions.utr } },
-            { metadata: { path: ["rawPayload", "utr"], string_contains: filterOptions.utr } }
-          ]
-        }
+            {
+              metadata: {
+                path: ["rawPayload", "utr"],
+                string_contains: filterOptions.utr,
+              },
+            },
+          ],
+        },
       ];
     }
 
@@ -1242,15 +1247,9 @@ class PayoutRequestsService {
 
     const decryptedPayouts = payoutRequests.map((payout) => ({
       ...payout,
-      beneficiaryAccount: payout.beneficiaryAccount
-        ? decrypt(payout.beneficiaryAccount)
-        : null,
-      beneficiaryBank: payout.beneficiaryBank
-        ? decrypt(payout.beneficiaryBank)
-        : null,
-      beneficiaryIfsc: payout.beneficiaryIfsc
-        ? decrypt(payout.beneficiaryIfsc)
-        : null,
+      beneficiaryAccount: safeDecrypt(payout.beneficiaryAccount, true),
+      beneficiaryBank: safeDecrypt(payout.beneficiaryBank, true),
+      beneficiaryIfsc: safeDecrypt(payout.beneficiaryIfsc, true),
     }));
 
     return { payoutRequests: decryptedPayouts, total };

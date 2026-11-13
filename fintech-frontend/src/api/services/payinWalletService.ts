@@ -24,10 +24,16 @@ export const getPayinWalletTransactions = async (
   if (filters.search) params.search = filters.search;
   if (filters.amountMin) params.amountMin = filters.amountMin;
   if (filters.amountMax) params.amountMax = filters.amountMax;
-  if (filters.dateFrom)
-    params.startDate = filters.dateFrom.toISOString().split("T")[0];
-  if (filters.dateTo)
-    params.endDate = filters.dateTo.toISOString().split("T")[0];
+  if (filters.dateFrom) {
+    const s = new Date(filters.dateFrom);
+    s.setHours(0, 0, 0, 0);
+    params.startDate = s.toISOString();
+  }
+  if (filters.dateTo) {
+    const e = new Date(filters.dateTo);
+    e.setHours(23, 59, 59, 999);
+    params.endDate = e.toISOString();
+  }
 
   const { data } = await api.get("/payin-wallets", { params });
 

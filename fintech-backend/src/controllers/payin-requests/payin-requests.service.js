@@ -1312,13 +1312,39 @@ class PayInRequestsService {
     }
 
     if (filterOptions.amountMin || filterOptions.amountMax) {
-      where.amount = {};
-      if (filterOptions.amountMin) {
-        where.amount.gte = parseFloat(filterOptions.amountMin);
+      const min =
+        filterOptions.amountMin !== undefined &&
+        filterOptions.amountMin !== null &&
+        filterOptions.amountMin !== ""
+          ? Number(filterOptions.amountMin)
+          : null;
+      const max =
+        filterOptions.amountMax !== undefined &&
+        filterOptions.amountMax !== null &&
+        filterOptions.amountMax !== ""
+          ? Number(filterOptions.amountMax)
+          : null;
+
+      const inrRange = {};
+      const rawRange = {};
+      if (min !== null) {
+        inrRange.gte = min;
+        rawRange.gte = min;
       }
-      if (filterOptions.amountMax) {
-        where.amount.lte = parseFloat(filterOptions.amountMax);
+      if (max !== null) {
+        inrRange.lte = max;
+        rawRange.lte = max;
       }
+
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { amountInINR: inrRange },
+            { AND: [{ amountInINR: null }, { amount: rawRange }] },
+          ],
+        },
+      ];
     }
 
     if (filterOptions.feeType) {
