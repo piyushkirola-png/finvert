@@ -1,0 +1,27 @@
+model PayInWalletSummary {
+  id                       Int      @id @default(autoincrement())
+  merchantId               Int
+  userId                   Int?
+  closingBalance           Decimal  @db.Decimal(15, 2)
+  totalInToday             Decimal  @db.Decimal(15, 2)
+  totalInThisWeek          Decimal  @db.Decimal(15, 2)
+  totalInThisMonth         Decimal  @db.Decimal(15, 2)
+  totalInThisYear          Decimal  @db.Decimal(15, 2)
+  successfulPayIns         Int
+  failedPayIns             Int
+  pendingPayIns            Int
+  totalPayIns              Int
+  netChargesToday          Decimal  @db.Decimal(15, 2)
+  netChargesThisWeek       Decimal  @db.Decimal(15, 2)
+  netChargesThisMonth      Decimal  @db.Decimal(15, 2)
+  netChargesThisYear       Decimal  @db.Decimal(15, 2)
+  lastTransactionProcessed String
+  lastRefreshedAt          DateTime @default(now())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@unique([merchantId, userId])
+}

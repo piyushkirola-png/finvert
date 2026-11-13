@@ -1,0 +1,19 @@
+model Queue {
+  id              Int         @id @default(autoincrement())
+  userReferenceId String
+  bankReferenceId String
+  gatewayId       String
+  status          QueueStatus
+  amount          Float
+  retryCount      Int
+  maxRetryLimit   Int?
+  nextCheckAt     DateTime
+  lastCheckedAt   DateTime
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status, nextCheckAt])
+  @@index([gatewayId])
+  @@index([userReferenceId])
+}

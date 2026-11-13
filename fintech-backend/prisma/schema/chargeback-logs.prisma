@@ -1,0 +1,18 @@
+model ChargebackLog {
+  id              Int      @id @default(autoincrement())
+  chargebackId    Int
+  action          String
+  statusBefore    ChargebackStatus?
+  statusAfter     ChargebackStatus?
+  description     String?
+  metadata        Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+  
+  chargeback      Chargeback @relation(fields: [chargebackId], references: [id], onDelete: Cascade)
+  
+  @@index([chargebackId])
+  @@index([createdAt])
+  @@index([action])
+}

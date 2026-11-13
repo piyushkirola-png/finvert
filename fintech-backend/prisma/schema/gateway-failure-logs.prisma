@@ -1,0 +1,18 @@
+model GatewayFailureLog {
+  id              Int     @id @default(autoincrement())
+  payInRequestId  Int
+  gatewayId       Int
+  errorCode       String?
+  errorMessage    String?
+  failureReason   String?
+  attemptNumber   Int     @default(1)
+  retryable       Boolean @default(true)
+  
+  createdAt       DateTime @default(now())
+  
+  gateway Gateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  payInRequest PayInRequest @relation(fields: [payInRequestId], references: [id], onDelete: Cascade)
+  
+  @@index([payInRequestId])
+  @@index([gatewayId])
+}

@@ -1,0 +1,76 @@
+model PayInRequest {
+  id                      Int                  @id @default(autoincrement())
+  merchantId              Int
+  gatewayId               Int
+  userId                  Int?
+  amount                  Decimal              @db.Decimal(15, 2)
+  currency                String               @default("INR")
+  status                  PayInRequestStatus   @default(PENDING)
+  merchantReference       String               @unique
+  gatewayReference        String?
+  cardNetwork             CardNetwork          @default(UNKNOWN)
+  customerName            String?
+  customerEmail           String?
+  customerPhone           String?
+  customerAddress         String?
+  customerPincode         String?
+  requestedAt             DateTime             @default(now())
+  processedAt             DateTime?
+  completedAt             DateTime?
+  expiresAt               DateTime?
+  gatewayRate             Decimal?             @db.Decimal(15, 2)
+  merchantRate            Decimal?             @db.Decimal(15, 2)
+  taxRate                 Decimal?             @db.Decimal(5, 2)
+  taxAmount               Decimal?             @db.Decimal(15, 2)
+  feeType                 RateType?
+  feeRate                 Decimal?             @db.Decimal(15, 2)
+  feeAmount               Decimal?             @db.Decimal(15, 2)
+  amountToCredit          Decimal?             @db.Decimal(15, 2)
+  amountInINR             Decimal?             @db.Decimal(15, 2)
+  fxRate                  Decimal?             @db.Decimal(15, 6)
+  gatewayAmount           Decimal?             @db.Decimal(15, 2)
+  platformProfit          Decimal?             @db.Decimal(15, 2)
+  
+  payInWalletTransactionId Int?                @unique
+  payInWalletTransaction  PayInWallet?         @relation("PayInWalletRelation", fields: [payInWalletTransactionId], references: [id])
+  
+  failureReason           String?
+  failureCode             String?
+  retryCount              Int                  @default(0)
+  lastRetryAt             DateTime?
+  maxRetries              Int                  @default(3)
+  intent                  String?
+  url                     String?
+  paymentMode             String?
+  ipAddress               String?
+  userAgent               String?
+  deviceId                String?
+  geolocation             String?
+  notes                   String?
+  metadata                Json?
+  requestLog              Json?
+  responseLog             Json?
+  callbackLog             Json?
+  callbackNeeded          Boolean              @default(true)
+  callbackReceived        Boolean              @default(false)
+  callbackResponse        Json?
+  callbackReceivedAt      DateTime?
+  createdBy               String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  chargebacks             Chargeback[]
+  refunds                 Refund[]
+  merchant                Merchant             @relation(fields: [merchantId], references: [id])
+  gateway                 Gateway              @relation(fields: [gatewayId], references: [id])
+  user                    User?                @relation(fields: [userId], references: [id])
+  failureLogs             GatewayFailureLog[]
+
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([merchantReference])
+  @@index([merchantId, status])
+  @@index([createdAt])
+}

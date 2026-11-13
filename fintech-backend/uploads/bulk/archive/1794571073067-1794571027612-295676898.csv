@@ -1,0 +1,11 @@
+amount,currency,merchantReference,paymentMode,customerName,customerEmail,customerPhone,cardNumber,expiryMonth,expiryYear,cvv,cardHolderName
+1700,INR,PAYIN-CSV-18360,CARD,Divya Bhat,divya.bhat@example.com,"6686771821","4111111111111111","11","2031","506","Divya Bhat"
+4000,INR,PAYIN-CSV-18361,UPI,Sanjay Patel,sanjay.patel65@example.com,"7578862514",,,,,
+1800,INR,PAYIN-CSV-18362,CARD,Rajesh Joshi,rajesh.joshi@example.com,"8381439715","4111111111111111","12","2030","800","Rajesh Joshi"
+3400,INR,PAYIN-CSV-18363,CARD,Manish Iyer,manish.iyer15@example.com,"7055695252","4242424242424242","06","2029","775","Manish Iyer"
+1900,INR,PAYIN-CSV-18364,CARD,Emma Patel,emma.patel29@example.com,"9315448877","6011111111111117","11","2028","186","Emma Patel"
+5000,INR,PAYIN-CSV-18365,UPI,Anjali Das,anjali.das83@example.com,"7388934855",,,,,
+4100,INR,PAYIN-CSV-18366,UPI,Pooja Bansal,pooja.bansal@example.com,"6636161427",,,,,
+1800,INR,PAYIN-CSV-18367,CARD,Amit Verma,amit.verma29@example.com,"9720679571","3530111333300000","01","2029","165","Amit Verma"
+4000,INR,PAYIN-CSV-18368,UPI,Kavya Bhat,kavya.bhat72@example.com,"9518707212",,,,,
+1400,INR,PAYIN-CSV-18369,CARD,Pooja Patel,pooja.patel@example.com,"8279743087","3566002020360505","04","2030","590","Pooja Patel"

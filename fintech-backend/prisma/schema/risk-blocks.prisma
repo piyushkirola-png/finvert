@@ -1,0 +1,14 @@
+model RiskBlock {
+  id          Int           @id @default(autoincrement())
+  type        RiskBlockType
+  value       String
+  reason      String?
+  isActive    Boolean       @default(true)
+  createdBy   Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdByUser User? @relation(fields: [createdBy], references: [id], name: "RiskBlockCreatedBy")
+
+  @@index([type, value])
+}

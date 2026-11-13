@@ -1,0 +1,184 @@
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MERCHANT
+  USER
+}
+
+enum PayInRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+  DISPUTED
+}
+
+enum PayOutRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum RateType {
+  FIXED
+  PERCENTAGE
+}
+
+enum RateDirection {
+  PAY_IN
+  PAY_OUT
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  ACKNOWLEDGED
+  SENT
+}
+
+enum WebhookEventType {
+  PAY_IN_STATUS_UPDATE
+  PAY_OUT_STATUS_UPDATE
+  SETTLEMENT_COMPLETED
+  CHARGEBACK_CREATED
+  CHARGEBACK_RESOLVED
+  REFUND_CREATED
+  REFUND_COMPLETED
+  BULK_UPLOAD_COMPLETED
+}
+
+enum GatewayServiceType {
+  PAY_IN
+  PAY_OUT
+  PAY_IN_PAY_OUT
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ExportType {
+  PAYOUT_REQUESTS
+  PAYOUT_WALLETS
+  PAYIN_REQUESTS
+  PAYIN_WALLETS
+  SETTLEMENTS
+  CHARGEBACKS
+  REFUNDS
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+enum SettlementApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum QueueStatus {
+  PENDING
+  FAILED
+  COMPLETED
+}
+
+enum ChargebackStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISPUTED
+  RESOLVED
+  REVERSED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ChargebackReason {
+  FRAUDULENT
+  DUPLICATE
+  PRODUCT_NOT_RECEIVED
+  SERVICE_NOT_PROVIDED
+  UNAUTHORIZED
+  TECHNICAL_ISSUE
+  CUSTOMER_DISPUTE
+  CANCELLED
+  OTHER
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+}
+
+enum RiskBlockType {
+  USER_ID
+  MERCHANT_ID
+  EMAIL
+  PHONE_NUMBER
+  CARD_BIN
+  CARD_LAST4
+  VPA
+  IP_ADDRESS
+  DEVICE_ID
+}
+
+enum BulkUploadStatus {
+  COMPLETED
+  PROCESSING
+  PENDING
+  PAUSED
+  FAILED
+}
+
+enum ScheduleStatus {
+  COMPLETED
+  PROCESSING
+  PENDING
+  FAILED
+}
+
+enum CardNetwork {
+  VISA
+  MASTERCARD
+  RUPAY
+  AMEX
+  DINERS
+  MAESTRO
+  UNIONPAY
+  JCB
+  DISCOVER
+  OTHER
+  UNKNOWN
+}

@@ -1,0 +1,12 @@
+model GatewayMerchantMapping {
+  id         Int      @id @default(autoincrement())
+  gatewayId  Int
+  merchantId Int
+  status     String   @default("ACTIVE")
+  assignedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  gateway  Gateway  @relation(fields: [gatewayId], references: [id])
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+}

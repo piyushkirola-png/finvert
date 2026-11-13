@@ -1,0 +1,38 @@
+model Settlement {
+  id             Int                      @id @default(autoincrement())
+  merchantId     Int
+  userId         Int?
+  amount         Decimal                  @db.Decimal(15, 2)
+  status         SettlementStatus         @default(PENDING)
+  description    String?
+  approvalStatus SettlementApprovalStatus @default(PENDING)
+  remarks        String?
+  sourceWalletBalanceBefore            Decimal? @db.Decimal(15, 2)
+  sourceWalletBalanceAfter             Decimal? @db.Decimal(15, 2)
+  destinationWalletBalanceBefore       Decimal? @db.Decimal(15, 2)
+  destinationWalletBalanceAfter        Decimal? @db.Decimal(15, 2)
+  sourceWalletDebitTransactionId       Int?
+  destinationWalletCreditTransactionId Int?
+  fee Decimal? @db.Decimal(15, 2)
+  requestedAt DateTime  @default(now())
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  processedAt DateTime?
+  completedAt DateTime?
+  createdBy   Int?
+  approvedBy  Int?
+  rejectedBy  Int?
+  notes       String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id]) 
+
+  @@index([merchantId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([merchantId, status])
+}

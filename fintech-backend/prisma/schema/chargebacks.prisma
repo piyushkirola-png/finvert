@@ -1,0 +1,50 @@
+model Chargeback {
+  id                      Int               @id @default(autoincrement())
+  payInRequestId          Int               @unique
+  merchantId              Int
+  amount                  Decimal           @db.Decimal(15, 2)
+  currency                String            @default("INR")
+  status                  ChargebackStatus  @default(PENDING)
+  reason                  ChargebackReason?
+  reasonDescription       String?
+  gatewayId               Int
+  gatewayChargebackId     String?           @unique
+  customerName            String?
+  customerEmail           String?
+  customerPhone           String?
+  disputeOpenedAt         DateTime?
+  disputeClosedAt         DateTime?
+  disputeReason           String?
+  disputeEvidence         Json?
+  chargebackFee           Decimal?          @db.Decimal(15, 2)
+  merchantLiability       Decimal?          @db.Decimal(15, 2)
+  recoveredAmount         Decimal?          @db.Decimal(15, 2)
+  walletDebitTransactionId Int?             @unique
+  walletCreditTransactionId Int?            @unique
+  initiatedAt             DateTime          @default(now())
+  respondedAt             DateTime?
+  resolvedAt              DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  createdBy               String?
+  updatedBy               String?
+  notes                   String?
+  metadata                Json?
+
+  payInRequest            PayInRequest      @relation(fields: [payInRequestId], references: [id], onDelete: Cascade)
+  merchant                Merchant          @relation(fields: [merchantId], references: [id])
+  gateway                 Gateway           @relation(fields: [gatewayId], references: [id])
+  payInWalletTransaction  PayInWallet?      @relation("ChargebackWalletDebit", fields: [walletDebitTransactionId], references: [id])
+  payInWalletCredit       PayInWallet?      @relation("ChargebackWalletCredit", fields: [walletCreditTransactionId], references: [id])
+  logs                    ChargebackLog[] 
+
+  @@index([payInRequestId])
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([initiatedAt])
+  @@index([resolvedAt])
+  @@index([createdAt])
+  @@index([merchantId, status])
+  @@index([initiatedAt, status])
+}

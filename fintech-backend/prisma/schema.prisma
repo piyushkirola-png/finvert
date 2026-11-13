@@ -1,0 +1,1141 @@
+generator client {
+        provider        = "prisma-client-js"
+        previewFeatures = ["prismaSchemaFolder"]
+      }
+
+      datasource db {
+        provider = "postgresql"
+        url      = env("DATABASE_URL")
+      }
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MERCHANT
+  USER
+}
+
+enum PayInRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+  DISPUTED
+}
+
+enum PayOutRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum RateType {
+  FIXED
+  PERCENTAGE
+}
+
+enum RateDirection {
+  PAY_IN
+  PAY_OUT
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  ACKNOWLEDGED
+  SENT
+}
+
+enum WebhookEventType {
+  PAY_IN_STATUS_UPDATE
+  PAY_OUT_STATUS_UPDATE
+  SETTLEMENT_COMPLETED
+  CHARGEBACK_CREATED
+  CHARGEBACK_RESOLVED
+  REFUND_CREATED
+  REFUND_COMPLETED
+  BULK_UPLOAD_COMPLETED
+}
+
+enum GatewayServiceType {
+  PAY_IN
+  PAY_OUT
+  PAY_IN_PAY_OUT
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ExportType {
+  PAYOUT_REQUESTS
+  PAYOUT_WALLETS
+  PAYIN_REQUESTS
+  PAYIN_WALLETS
+  SETTLEMENTS
+  CHARGEBACKS
+  REFUNDS
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+enum SettlementApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum QueueStatus {
+  PENDING
+  FAILED
+  COMPLETED
+}
+
+enum ChargebackStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISPUTED
+  RESOLVED
+  REVERSED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ChargebackReason {
+  FRAUDULENT
+  DUPLICATE
+  PRODUCT_NOT_RECEIVED
+  SERVICE_NOT_PROVIDED
+  UNAUTHORIZED
+  TECHNICAL_ISSUE
+  CUSTOMER_DISPUTE
+  CANCELLED
+  OTHER
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+}
+
+enum RiskBlockType {
+  USER_ID
+  MERCHANT_ID
+  EMAIL
+  PHONE_NUMBER
+  CARD_BIN
+  CARD_LAST4
+  VPA
+  IP_ADDRESS
+  DEVICE_ID
+}
+
+enum BulkUploadStatus {
+  COMPLETED
+  PROCESSING
+  PENDING
+  PAUSED
+  FAILED
+}
+
+enum ScheduleStatus {
+  COMPLETED
+  PROCESSING
+  PENDING
+  FAILED
+}
+
+enum CardNetwork {
+  VISA
+  MASTERCARD
+  RUPAY
+  AMEX
+  DINERS
+  MAESTRO
+  UNIONPAY
+  JCB
+  DISCOVER
+  OTHER
+  UNKNOWN
+}
+
+model Gateway {
+  id             Int      @id @default(autoincrement())
+  name           String
+  serviceType    GatewayServiceType @default(PAY_IN)
+  websiteUrl     String?
+  logoUrl        String?
+  contactName    String?
+  contactPhone   String?
+  contactEmail   String?
+  isActive       Boolean  @default(true)
+  config         Json?  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  gatewayMerchantMappings GatewayMerchantMapping[] 
+  merchantRates   MerchantRate[]
+  payInRequests   PayInRequest[]
+  payOutRequests  PayOutRequest[]
+  inboundLogs     InboundLog[]
+  outboundLogs    OutboundLog[]
+  failureLogs     GatewayFailureLog[]
+  merchantPriorities MerchantGatewayPriority[]
+  chargebacks     Chargeback[]
+  refunds         Refund[]
+
+  @@index([isActive])
+  @@index([name])
+}
+
+model GatewayMerchantMapping {
+  id         Int      @id @default(autoincrement())
+  gatewayId  Int
+  merchantId Int
+  status     String   @default("ACTIVE")
+  assignedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  gateway  Gateway  @relation(fields: [gatewayId], references: [id])
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+}
+
+model GatewayFailureLog {
+  id              Int     @id @default(autoincrement())
+  payInRequestId  Int
+  gatewayId       Int
+  errorCode       String?
+  errorMessage    String?
+  failureReason   String?
+  attemptNumber   Int     @default(1)
+  retryable       Boolean @default(true)
+  
+  createdAt       DateTime @default(now())
+  
+  gateway Gateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  payInRequest PayInRequest @relation(fields: [payInRequestId], references: [id], onDelete: Cascade)
+  
+  @@index([payInRequestId])
+  @@index([gatewayId])
+}
+
+model Merchant {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  phone    String?
+  isActive Boolean @default(true)
+  secretKey String @unique
+  webhookUrl    String?
+  webhookSecret String?
+  callbackUrl   String?
+  redirectUrl   String?
+  clientId     String?
+  clientSecret String?
+  onboardingToken   String?   @unique
+  ipWhitelist String[] @default([])
+  payInLien  Decimal @default(0) @db.Decimal(15, 2)
+  payOutLien Decimal @default(0) @db.Decimal(15, 2)
+  businessName String?
+  businessType String?
+  websiteUrl   String?
+  gstin        String?
+  bankName           String?
+  accountNumber      String?
+  ifscCode           String?
+  settlementCurrency String? @default("INR")
+  webhookConfig Json?
+  paymentMethods Json?
+  status String @default("ACTIVE")
+  planType              String    @default("BASIC")
+  bulkUploadEnabled     Boolean   @default(false)
+  contactPerson      String?
+  businessPhone      String?
+  businessEmail      String?
+  businessAddress    String?
+  city               String?
+  state              String?
+  pinCode            String?
+  zone               String?
+  panNumber          String?
+  nameAsPerPan       String?
+  incorporationDate  String?
+  gstStatus          String?
+  merchantCategory   String?
+  annualTurnover     String?
+  operatingCountry   String?
+  numberOfEmployees  String?
+  bankAccountType    String?
+  bankAccountName    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs               AuditLog[]
+  users                   User[]
+  merchantRates           MerchantRate[]
+  merchantDocuments       MerchantDocument[]
+  payInWallets            PayInWallet[]
+  payOutWallets           PayOutWallet[]
+  payInRequests           PayInRequest[]
+  payOutRequests          PayOutRequest[]
+  payInWalletSummary      PayInWalletSummary[]
+  payOutWalletSummary     PayOutWalletSummary[]
+  settlements             Settlement[]
+  webhookOutbound         OutboundLog[]
+  webhookInbound          InboundLog[]
+  csvExports              CsvExport[]
+  gatewayMerchantMappings GatewayMerchantMapping[]
+  routingPreference       MerchantRoutingPreference?
+  chargebacks             Chargeback[]
+  refunds                 Refund[]
+  bulkUploads             BulkUpload[]
+  scheduledTasks          ScheduledTask[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MerchantDocument {
+  id         Int     @id @default(autoincrement())
+  merchantId Int
+  type       String
+  customName String?
+  fileUrl    String
+  fileName   String?
+  fileType   String?
+  status     String  @default("PENDING")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([merchantId, type, customName])
+}
+
+model MerchantRate {
+  id            Int           @id @default(autoincrement())
+  merchantId    Int
+  gatewayId     Int
+  rateType      RateType      @default(FIXED)
+  rateDirection RateDirection @default(PAY_IN)
+  rateValue     Decimal       @db.Decimal(15,2)
+  minAmount     Decimal?      @db.Decimal(15,2)
+  maxAmount     Decimal?      @db.Decimal(15,2)
+  taxRate       Float?
+  notes         String?
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  gateway  Gateway  @relation(fields: [gatewayId], references: [id])
+  
+  @@index([merchantId])
+  @@index([gatewayId])
+}
+
+model MerchantRoutingPreference {
+  id          Int     @id @default(autoincrement())
+  merchantId  Int     @unique
+  routingStrategy String @default("PRIORITY")
+  preferredGatewayId Int?
+  loadBalancingConfig Json?
+  riskLevel   String  @default("LOW") 
+  restrictedGateways Int[] @default([])
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  priorityGateways MerchantGatewayPriority[]
+}
+
+model MerchantGatewayPriority {
+  id                      Int     @id @default(autoincrement())
+  merchantRoutingPrefId   Int
+  gatewayId               Int
+  priority                Int
+  paymentModes            String[] @default([])
+  enableFailover          Boolean @default(true)
+  maxRetries              Int     @default(3)
+  isActive                Boolean @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  preference MerchantRoutingPreference @relation(fields: [merchantRoutingPrefId], references: [id], onDelete: Cascade)
+  gateway    Gateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  
+  @@unique([merchantRoutingPrefId, priority])
+  @@index([merchantRoutingPrefId])
+}
+
+model User {
+  id                  Int      @id @default(autoincrement())
+  email               String   @unique
+  hashedPassword      String
+  fullName            String
+  phoneNumber         String?
+  isActive            Boolean  @default(true)
+  emailVerified       Boolean  @default(false)
+  role                Role     @default(USER)
+  merchantId          Int?
+  mfaEnabled          Boolean  @default(false)
+  mfaMethod           String?
+  mfaSecret           String?
+  failedLoginAttempts Int      @default(0)
+  lastLoginAt         DateTime?
+  passwordChangedAt   DateTime?
+  otp                 String?
+  otpExpiry           DateTime?
+  defaultCurrency     String   @default("INR")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  merchant            Merchant?              @relation(fields: [merchantId], references: [id])
+  sessions            UserSession[]
+  permissions         UserPermission[]
+  riskBlocksCreated   RiskBlock[] @relation("RiskBlockCreatedBy")
+  passwordResets      PasswordReset[]
+  auditLogs           AuditLog[]
+  payInRequests       PayInRequest[]
+  payInWallets        PayInWallet[]
+  payInWalletSummaries PayInWalletSummary[]
+  payOutRequests PayOutRequest[]
+  payOutWallets       PayOutWallet[]
+  payOutWalletSummary PayOutWalletSummary[]
+  settlements         Settlement[]
+  csvExports          CsvExport[]
+  bulkUploads         BulkUpload[]
+
+  @@index([merchantId])
+  @@index([email])
+}
+
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  refreshToken String   @unique
+  accessToken  String   @unique
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  isRevoked    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([accessToken])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  resource    String
+  action      String
+  createdAt   DateTime @default(now())
+
+  userPermissions UserPermission[]
+
+  @@unique([resource, action])
+}
+
+model UserPermission {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  permissionId Int
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
+
+  user       User       @relation(fields: [userId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  merchantId  Int?
+  action      String
+  resource    String
+  resourceId  String?
+  status      String?
+  amount      Float?
+  description String?
+  changes     Json?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user     User?     @relation(fields: [userId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([action])
+  @@index([resource])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PayInRequest {
+  id                      Int                  @id @default(autoincrement())
+  merchantId              Int
+  gatewayId               Int
+  userId                  Int?
+  amount                  Decimal              @db.Decimal(15, 2)
+  currency                String               @default("INR")
+  status                  PayInRequestStatus   @default(PENDING)
+  merchantReference       String               @unique
+  gatewayReference        String?
+  cardNetwork             CardNetwork          @default(UNKNOWN)
+  customerName            String?
+  customerEmail           String?
+  customerPhone           String?
+  customerAddress         String?
+  customerPincode         String?
+  requestedAt             DateTime             @default(now())
+  processedAt             DateTime?
+  completedAt             DateTime?
+  expiresAt               DateTime?
+  gatewayRate             Decimal?             @db.Decimal(15, 2)
+  merchantRate            Decimal?             @db.Decimal(15, 2)
+  taxRate                 Decimal?             @db.Decimal(5, 2)
+  taxAmount               Decimal?             @db.Decimal(15, 2)
+  feeType                 RateType?
+  feeRate                 Decimal?             @db.Decimal(15, 2)
+  feeAmount               Decimal?             @db.Decimal(15, 2)
+  amountToCredit          Decimal?             @db.Decimal(15, 2)
+  amountInINR             Decimal?             @db.Decimal(15, 2)
+  fxRate                  Decimal?             @db.Decimal(15, 6)
+  gatewayAmount           Decimal?             @db.Decimal(15, 2)
+  platformProfit          Decimal?             @db.Decimal(15, 2)
+  
+  payInWalletTransactionId Int?                @unique
+  payInWalletTransaction  PayInWallet?         @relation("PayInWalletRelation", fields: [payInWalletTransactionId], references: [id])
+  
+  failureReason           String?
+  failureCode             String?
+  retryCount              Int                  @default(0)
+  lastRetryAt             DateTime?
+  maxRetries              Int                  @default(3)
+  intent                  String?
+  url                     String?
+  paymentMode             String?
+  ipAddress               String?
+  userAgent               String?
+  deviceId                String?
+  geolocation             String?
+  notes                   String?
+  metadata                Json?
+  requestLog              Json?
+  responseLog             Json?
+  callbackLog             Json?
+  callbackNeeded          Boolean              @default(true)
+  callbackReceived        Boolean              @default(false)
+  callbackResponse        Json?
+  callbackReceivedAt      DateTime?
+  createdBy               String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  chargebacks             Chargeback[]
+  refunds                 Refund[]
+  merchant                Merchant             @relation(fields: [merchantId], references: [id])
+  gateway                 Gateway              @relation(fields: [gatewayId], references: [id])
+  user                    User?                @relation(fields: [userId], references: [id])
+  failureLogs             GatewayFailureLog[]
+
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([merchantReference])
+  @@index([merchantId, status])
+  @@index([createdAt])
+}
+
+model PayInWallet {
+  id              Int             @id @default(autoincrement())
+  merchantId      Int
+  userId          Int?
+  amount          Decimal         @db.Decimal(15, 2)
+  type            TransactionType
+  description     String
+  transactionId   String?         @unique
+  referenceId     String?
+  transactionDate DateTime
+  openingBalance  Decimal         @db.Decimal(15, 2)
+  closingBalance  Decimal         @db.Decimal(15, 2)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant                Merchant          @relation(fields: [merchantId], references: [id])
+  user                    User?             @relation(fields: [userId], references: [id])
+  payInRequest            PayInRequest?     @relation("PayInWalletRelation")
+  chargebackDebit         Chargeback?       @relation("ChargebackWalletDebit")
+  chargebackCredit        Chargeback?       @relation("ChargebackWalletCredit")
+  refundDebit             Refund?           @relation("RefundWalletDebit")
+
+  @@index([merchantId])
+  @@index([userId])
+  @@index([transactionId])
+  @@index([referenceId])
+  @@index([merchantId, userId, createdAt])
+  @@index([transactionDate])
+  @@index([merchantId, transactionDate])
+  @@index([merchantId, userId, transactionDate])
+}
+
+model PayInWalletSummary {
+  id                       Int      @id @default(autoincrement())
+  merchantId               Int
+  userId                   Int?
+  closingBalance           Decimal  @db.Decimal(15, 2)
+  totalInToday             Decimal  @db.Decimal(15, 2)
+  totalInThisWeek          Decimal  @db.Decimal(15, 2)
+  totalInThisMonth         Decimal  @db.Decimal(15, 2)
+  totalInThisYear          Decimal  @db.Decimal(15, 2)
+  successfulPayIns         Int
+  failedPayIns             Int
+  pendingPayIns            Int
+  totalPayIns              Int
+  netChargesToday          Decimal  @db.Decimal(15, 2)
+  netChargesThisWeek       Decimal  @db.Decimal(15, 2)
+  netChargesThisMonth      Decimal  @db.Decimal(15, 2)
+  netChargesThisYear       Decimal  @db.Decimal(15, 2)
+  lastTransactionProcessed String
+  lastRefreshedAt          DateTime @default(now())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@unique([merchantId, userId])
+}
+
+model PayOutRequest {
+  id                      Int                  @id @default(autoincrement())
+  merchantId              Int
+  gatewayId               Int
+  userId                  Int?
+  amount                  Decimal              @db.Decimal(15, 2)
+  status                  PayOutRequestStatus  @default(PENDING)
+  merchantReference       String               @unique
+  gatewayReference        String?
+  paymentMode             String?              @default("BANK")
+  beneficiaryName         String?
+  beneficiaryAccount      String?
+  beneficiaryBank         String?
+  beneficiaryIfsc         String?
+  requestedAt             DateTime             @default(now())
+  processedAt             DateTime?
+  completedAt             DateTime?
+  expiresAt               DateTime?
+  gatewayRate             Decimal?             @db.Decimal(15, 2)
+  merchantRate            Decimal?             @db.Decimal(15, 2)
+  taxRate                 Decimal?             @db.Decimal(5, 2)
+  taxAmount               Decimal?             @db.Decimal(15, 2)
+  feeType                 RateType?
+  feeRate                 Decimal?             @db.Decimal(15, 2)
+  feeAmount               Decimal?             @db.Decimal(15, 2)
+  amountToDebit           Decimal?             @db.Decimal(15, 2)
+  gatewayAmount           Decimal?             @db.Decimal(15, 2)
+  platformProfit          Decimal?             @db.Decimal(15, 2)
+  payOutWalletTransactionId Int?               @unique
+  payOutWalletTransaction  PayOutWallet?       @relation("PayOutWalletRelation", fields: [payOutWalletTransactionId], references: [id])
+  failureReason           String?
+  failureCode             String?
+  retryCount              Int                  @default(0)
+  lastRetryAt             DateTime?
+  maxRetries              Int                  @default(3)
+  ipAddress               String?
+  userAgent               String?
+  deviceId                String?
+  geolocation             String?
+  notes                   String?
+  metadata                Json?
+  requestLog              Json?
+  responseLog             Json?
+  callbackLog             Json?
+  callbackNeeded          Boolean              @default(true)
+  callbackReceived        Boolean              @default(false)
+  callbackResponse        Json?
+  callbackReceivedAt      DateTime?
+  createdBy               String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  merchant     Merchant    @relation(fields: [merchantId], references: [id])
+  gateway      Gateway     @relation(fields: [gatewayId], references: [id])
+  user         User?       @relation(fields: [userId], references: [id])
+
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([merchantReference])
+  @@index([createdAt])
+  @@index([merchantId, status])
+}
+
+model PayOutWallet {
+  id              Int             @id @default(autoincrement())
+  merchantId      Int
+  userId          Int?
+  amount          Decimal         @db.Decimal(15, 2)
+  type            TransactionType
+  description     String
+  transactionId   String?         @unique
+  referenceId     String?
+  transactionDate DateTime
+  openingBalance  Decimal         @db.Decimal(15, 2)
+  closingBalance  Decimal         @db.Decimal(15, 2)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant       Merchant        @relation(fields: [merchantId], references: [id])
+  user           User?           @relation(fields: [userId], references: [id])
+  payOutRequest PayOutRequest? @relation("PayOutWalletRelation")
+
+  @@index([merchantId])
+  @@index([userId])
+  @@index([transactionId])
+  @@index([referenceId])
+  @@index([transactionDate])
+  @@index([merchantId, transactionDate])
+  @@index([merchantId, userId, transactionDate])
+}
+
+model PayOutWalletSummary {
+  id                       Int      @id @default(autoincrement())
+  merchantId               Int
+  userId                   Int?
+  closingBalance           Decimal  @db.Decimal(15, 2)
+  totalOutToday            Decimal  @db.Decimal(15, 2)
+  totalOutThisWeek         Decimal  @db.Decimal(15, 2)
+  totalOutThisMonth        Decimal  @db.Decimal(15, 2)
+  totalOutThisYear         Decimal  @db.Decimal(15, 2)
+  successfulPayOuts        Int
+  failedPayOuts            Int
+  pendingPayOuts           Int
+  totalPayOuts             Int
+  netChargesToday          Decimal  @db.Decimal(15, 2)
+  netChargesThisWeek       Decimal  @db.Decimal(15, 2)
+  netChargesThisMonth      Decimal  @db.Decimal(15, 2)
+  netChargesThisYear       Decimal  @db.Decimal(15, 2)
+  lastTransactionProcessed String
+  lastRefreshedAt          DateTime @default(now()) 
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@unique([merchantId, userId])
+}
+
+model Refund {
+  id                      Int            @id @default(autoincrement())
+  payInRequestId          Int
+  merchantId              Int
+  amount                  Decimal        @db.Decimal(15, 2)
+  currency                String         @default("INR")
+  refundType              RefundType     @default(FULL)
+  status                  RefundStatus   @default(PENDING)
+  reason                  String?
+  gatewayId               Int
+  gatewayRefundId         String?        @unique
+  refundFee               Decimal?       @db.Decimal(15, 2)
+  adjustmentAmount        Decimal?       @db.Decimal(15, 2)
+  walletDebitTransactionId Int?          @unique
+  initiatedAt             DateTime       @default(now())
+  processedAt             DateTime?
+  completedAt             DateTime?
+  failedAt                DateTime?
+  cancelledAt             DateTime?
+  failureReason           String?
+  failureCode             String?
+  retryCount              Int            @default(0)
+  lastRetryAt             DateTime?
+  createdBy               String?
+  updatedBy               String?
+  notes                   String?
+  metadata                Json?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  
+  payInRequest            PayInRequest   @relation(fields: [payInRequestId], references: [id])
+  merchant                Merchant       @relation(fields: [merchantId], references: [id])
+  gateway                 Gateway        @relation(fields: [gatewayId], references: [id])
+  payInWalletTransaction  PayInWallet?   @relation("RefundWalletDebit", fields: [walletDebitTransactionId], references: [id])
+  logs                    RefundLog[]
+  
+  @@index([payInRequestId])
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model RefundLog {
+  id              Int          @id @default(autoincrement())
+  refundId        Int
+  action          String
+  statusBefore    RefundStatus?
+  statusAfter     RefundStatus?
+  description     String?
+  metadata        Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime     @default(now())
+  
+  refund          Refund       @relation(fields: [refundId], references: [id])
+  
+  @@index([refundId])
+  @@index([createdAt])
+}
+
+model Chargeback {
+  id                      Int               @id @default(autoincrement())
+  payInRequestId          Int               @unique
+  merchantId              Int
+  amount                  Decimal           @db.Decimal(15, 2)
+  currency                String            @default("INR")
+  status                  ChargebackStatus  @default(PENDING)
+  reason                  ChargebackReason?
+  reasonDescription       String?
+  gatewayId               Int
+  gatewayChargebackId     String?           @unique
+  customerName            String?
+  customerEmail           String?
+  customerPhone           String?
+  disputeOpenedAt         DateTime?
+  disputeClosedAt         DateTime?
+  disputeReason           String?
+  disputeEvidence         Json?
+  chargebackFee           Decimal?          @db.Decimal(15, 2)
+  merchantLiability       Decimal?          @db.Decimal(15, 2)
+  recoveredAmount         Decimal?          @db.Decimal(15, 2)
+  walletDebitTransactionId Int?             @unique
+  walletCreditTransactionId Int?            @unique
+  initiatedAt             DateTime          @default(now())
+  respondedAt             DateTime?
+  resolvedAt              DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  createdBy               String?
+  updatedBy               String?
+  notes                   String?
+  metadata                Json?
+
+  payInRequest            PayInRequest      @relation(fields: [payInRequestId], references: [id], onDelete: Cascade)
+  merchant                Merchant          @relation(fields: [merchantId], references: [id])
+  gateway                 Gateway           @relation(fields: [gatewayId], references: [id])
+  payInWalletTransaction  PayInWallet?      @relation("ChargebackWalletDebit", fields: [walletDebitTransactionId], references: [id])
+  payInWalletCredit       PayInWallet?      @relation("ChargebackWalletCredit", fields: [walletCreditTransactionId], references: [id])
+  logs                    ChargebackLog[] 
+
+  @@index([payInRequestId])
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([initiatedAt])
+  @@index([resolvedAt])
+  @@index([createdAt])
+  @@index([merchantId, status])
+  @@index([initiatedAt, status])
+}
+
+model ChargebackLog {
+  id              Int      @id @default(autoincrement())
+  chargebackId    Int
+  action          String
+  statusBefore    ChargebackStatus?
+  statusAfter     ChargebackStatus?
+  description     String?
+  metadata        Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+  
+  chargeback      Chargeback @relation(fields: [chargebackId], references: [id], onDelete: Cascade)
+  
+  @@index([chargebackId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model Settlement {
+  id             Int                      @id @default(autoincrement())
+  merchantId     Int
+  userId         Int?
+  amount         Decimal                  @db.Decimal(15, 2)
+  status         SettlementStatus         @default(PENDING)
+  description    String?
+  approvalStatus SettlementApprovalStatus @default(PENDING)
+  remarks        String?
+  sourceWalletBalanceBefore            Decimal? @db.Decimal(15, 2)
+  sourceWalletBalanceAfter             Decimal? @db.Decimal(15, 2)
+  destinationWalletBalanceBefore       Decimal? @db.Decimal(15, 2)
+  destinationWalletBalanceAfter        Decimal? @db.Decimal(15, 2)
+  sourceWalletDebitTransactionId       Int?
+  destinationWalletCreditTransactionId Int?
+  fee Decimal? @db.Decimal(15, 2)
+  requestedAt DateTime  @default(now())
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  processedAt DateTime?
+  completedAt DateTime?
+  createdBy   Int?
+  approvedBy  Int?
+  rejectedBy  Int?
+  notes       String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id]) 
+
+  @@index([merchantId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([merchantId, status])
+}
+
+model InboundLog {
+  id              Int               @id @default(autoincrement())
+  eventId         String?
+  gatewayId       Int?
+  merchantId      Int?
+  eventType       WebhookEventType?
+  processedAt     DateTime?
+  requestBody     Json?
+  requestHeaders  Json?
+  responseBody    Json?
+  responseHeaders Json?
+  status          WebhookStatus?
+  responseStatus  Int?
+  utr             String?
+  amount          Decimal?          @db.Decimal(15, 2)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  gateway  Gateway?  @relation(fields: [gatewayId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+
+  @@index([gatewayId])
+  @@index([merchantId])
+  @@index([createdAt])
+}
+
+model OutboundLog {
+  id              Int              @id @default(autoincrement())
+  merchantId      Int
+  gatewayId       Int?
+  eventType       WebhookEventType
+  processedAt     DateTime?
+  requestBody     Json?
+  requestHeaders  Json?
+  responseBody    Json?
+  responseHeaders Json?
+  status          WebhookStatus
+  amount          Decimal          @db.Decimal(15, 2)
+  responseStatus  Int?
+  utr             String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  gateway  Gateway? @relation(fields: [gatewayId], references: [id])
+
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([createdAt])
+}
+
+model CsvExport {
+  id           Int            @id @default(autoincrement())
+  userId       Int
+  merchantId   Int?
+  exportType   ExportType     
+  status       ExportStatus   @default(PENDING)
+  filters      Json?          
+  sorts        Json?          
+  startDate    DateTime?
+  endDate      DateTime?
+  fileUrl      String?        
+  fileSize     Int?           
+  generatedAt  DateTime?      
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user         User           @relation(fields: [userId], references: [id])
+  merchant     Merchant?      @relation(fields: [merchantId], references: [id])
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([status])
+  @@index([exportType])
+  @@index([createdAt])
+}
+
+model Queue {
+  id              Int         @id @default(autoincrement())
+  userReferenceId String
+  bankReferenceId String
+  gatewayId       String
+  status          QueueStatus
+  amount          Float
+  retryCount      Int
+  maxRetryLimit   Int?
+  nextCheckAt     DateTime
+  lastCheckedAt   DateTime
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status, nextCheckAt])
+  @@index([gatewayId])
+  @@index([userReferenceId])
+}
+
+model CurrencyRate {
+  id            Int      @id @default(autoincrement())
+  baseCurrency  String
+  quoteCurrency String   @default("INR")
+  rate          Decimal  @db.Decimal(15, 6)
+  source        String   @default("API")
+  validFrom     DateTime @default(now())
+  validTo       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([baseCurrency, quoteCurrency])
+  @@index([baseCurrency])
+}
+
+model RiskBlock {
+  id          Int           @id @default(autoincrement())
+  type        RiskBlockType
+  value       String
+  reason      String?
+  isActive    Boolean       @default(true)
+  createdBy   Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdByUser User? @relation(fields: [createdBy], references: [id], name: "RiskBlockCreatedBy")
+
+  @@index([type, value])
+}
+
+model BulkUpload {
+  id              Int      @id @default(autoincrement())
+  merchantId      Int
+  userId          Int
+  fileName        String
+  fileUrl         String?
+  totalRows       Int      @default(0)
+  successRows     Int      @default(0)
+  failedRows      Int      @default(0)
+  status          BulkUploadStatus @default(PENDING)
+  mode            String   @default("instant")
+  type            String
+  errorReport     Json?
+  upiIntentFileUrl String?
+  upiIntentCount   Int?    @default(0)
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  merchant        Merchant @relation(fields: [merchantId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+  scheduledTasks  ScheduledTask[] 
+
+  @@index([merchantId, status])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([type])
+  @@index([merchantId, createdAt])
+}
+
+model ScheduledTask {
+  id              Int      @id @default(autoincrement())
+  merchantId      Int
+  bulkUploadId    Int
+  scheduledTime   DateTime
+  status          ScheduleStatus @default(PENDING)
+  type            String
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  merchant        Merchant @relation(fields: [merchantId], references: [id])
+  bulkUpload      BulkUpload @relation(fields: [bulkUploadId], references: [id])
+
+  @@index([merchantId, status])
+  @@index([scheduledTime])
+  @@index([bulkUploadId])
+  @@index([type])
+}

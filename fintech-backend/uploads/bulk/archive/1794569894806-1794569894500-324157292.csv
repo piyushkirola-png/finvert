@@ -1,0 +1,6 @@
+amount,currency,merchantReference,paymentMode,customerName,customerEmail,customerPhone,cardNumber,expiryMonth,expiryYear,cvv,cardHolderName
+4800,INR,PAYIN-CSV-1021,CARD,Pooja Das,pooja.das@example.com,"7463567875","5105105105105100","03","2029","191","Pooja Das"
+1200,INR,PAYIN-CSV-1022,CARD,Shreya Khanna,shreya.khanna79@example.com,"6064313627","4111111111111111","06","2029","420","Shreya Khanna"
+1900,INR,PAYIN-CSV-1023,UPI,Kritika Shah,kritika.shah66@example.com,"9122733721",,,,,
+2000,INR,PAYIN-CSV-1024,UPI,Amit Bansal,amit.bansal23@example.com,"6163852685",,,,,
+3700,INR,PAYIN-CSV-1025,UPI,Rahul Singh,rahul.singh@example.com,"8323362562",,,,,

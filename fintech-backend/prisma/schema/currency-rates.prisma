@@ -1,0 +1,14 @@
+model CurrencyRate {
+  id            Int      @id @default(autoincrement())
+  baseCurrency  String
+  quoteCurrency String   @default("INR")
+  rate          Decimal  @db.Decimal(15, 6)
+  source        String   @default("API")
+  validFrom     DateTime @default(now())
+  validTo       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([baseCurrency, quoteCurrency])
+  @@index([baseCurrency])
+}

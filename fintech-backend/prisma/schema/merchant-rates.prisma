@@ -1,0 +1,21 @@
+model MerchantRate {
+  id            Int           @id @default(autoincrement())
+  merchantId    Int
+  gatewayId     Int
+  rateType      RateType      @default(FIXED)
+  rateDirection RateDirection @default(PAY_IN)
+  rateValue     Decimal       @db.Decimal(15,2)
+  minAmount     Decimal?      @db.Decimal(15,2)
+  maxAmount     Decimal?      @db.Decimal(15,2)
+  taxRate       Float?
+  notes         String?
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  gateway  Gateway  @relation(fields: [gatewayId], references: [id])
+  
+  @@index([merchantId])
+  @@index([gatewayId])
+}

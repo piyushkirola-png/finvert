@@ -1,0 +1,27 @@
+model PayOutWalletSummary {
+  id                       Int      @id @default(autoincrement())
+  merchantId               Int
+  userId                   Int?
+  closingBalance           Decimal  @db.Decimal(15, 2)
+  totalOutToday            Decimal  @db.Decimal(15, 2)
+  totalOutThisWeek         Decimal  @db.Decimal(15, 2)
+  totalOutThisMonth        Decimal  @db.Decimal(15, 2)
+  totalOutThisYear         Decimal  @db.Decimal(15, 2)
+  successfulPayOuts        Int
+  failedPayOuts            Int
+  pendingPayOuts           Int
+  totalPayOuts             Int
+  netChargesToday          Decimal  @db.Decimal(15, 2)
+  netChargesThisWeek       Decimal  @db.Decimal(15, 2)
+  netChargesThisMonth      Decimal  @db.Decimal(15, 2)
+  netChargesThisYear       Decimal  @db.Decimal(15, 2)
+  lastTransactionProcessed String
+  lastRefreshedAt          DateTime @default(now()) 
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@unique([merchantId, userId])
+}

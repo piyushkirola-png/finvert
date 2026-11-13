@@ -1,0 +1,64 @@
+model PayOutRequest {
+  id                      Int                  @id @default(autoincrement())
+  merchantId              Int
+  gatewayId               Int
+  userId                  Int?
+  amount                  Decimal              @db.Decimal(15, 2)
+  status                  PayOutRequestStatus  @default(PENDING)
+  merchantReference       String               @unique
+  gatewayReference        String?
+  paymentMode             String?              @default("BANK")
+  beneficiaryName         String?
+  beneficiaryAccount      String?
+  beneficiaryBank         String?
+  beneficiaryIfsc         String?
+  requestedAt             DateTime             @default(now())
+  processedAt             DateTime?
+  completedAt             DateTime?
+  expiresAt               DateTime?
+  gatewayRate             Decimal?             @db.Decimal(15, 2)
+  merchantRate            Decimal?             @db.Decimal(15, 2)
+  taxRate                 Decimal?             @db.Decimal(5, 2)
+  taxAmount               Decimal?             @db.Decimal(15, 2)
+  feeType                 RateType?
+  feeRate                 Decimal?             @db.Decimal(15, 2)
+  feeAmount               Decimal?             @db.Decimal(15, 2)
+  amountToDebit           Decimal?             @db.Decimal(15, 2)
+  gatewayAmount           Decimal?             @db.Decimal(15, 2)
+  platformProfit          Decimal?             @db.Decimal(15, 2)
+  payOutWalletTransactionId Int?               @unique
+  payOutWalletTransaction  PayOutWallet?       @relation("PayOutWalletRelation", fields: [payOutWalletTransactionId], references: [id])
+  failureReason           String?
+  failureCode             String?
+  retryCount              Int                  @default(0)
+  lastRetryAt             DateTime?
+  maxRetries              Int                  @default(3)
+  ipAddress               String?
+  userAgent               String?
+  deviceId                String?
+  geolocation             String?
+  notes                   String?
+  metadata                Json?
+  requestLog              Json?
+  responseLog             Json?
+  callbackLog             Json?
+  callbackNeeded          Boolean              @default(true)
+  callbackReceived        Boolean              @default(false)
+  callbackResponse        Json?
+  callbackReceivedAt      DateTime?
+  createdBy               String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  merchant     Merchant    @relation(fields: [merchantId], references: [id])
+  gateway      Gateway     @relation(fields: [gatewayId], references: [id])
+  user         User?       @relation(fields: [userId], references: [id])
+
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([merchantReference])
+  @@index([createdAt])
+  @@index([merchantId, status])
+}

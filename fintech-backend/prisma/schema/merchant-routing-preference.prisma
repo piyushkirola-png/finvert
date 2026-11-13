@@ -1,0 +1,34 @@
+model MerchantRoutingPreference {
+  id          Int     @id @default(autoincrement())
+  merchantId  Int     @unique
+  routingStrategy String @default("PRIORITY")
+  preferredGatewayId Int?
+  loadBalancingConfig Json?
+  riskLevel   String  @default("LOW") 
+  restrictedGateways Int[] @default([])
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  priorityGateways MerchantGatewayPriority[]
+}
+
+model MerchantGatewayPriority {
+  id                      Int     @id @default(autoincrement())
+  merchantRoutingPrefId   Int
+  gatewayId               Int
+  priority                Int
+  paymentModes            String[] @default([])
+  enableFailover          Boolean @default(true)
+  maxRetries              Int     @default(3)
+  isActive                Boolean @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  preference MerchantRoutingPreference @relation(fields: [merchantRoutingPrefId], references: [id], onDelete: Cascade)
+  gateway    Gateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  
+  @@unique([merchantRoutingPrefId, priority])
+  @@index([merchantRoutingPrefId])
+}

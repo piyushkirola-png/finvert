@@ -1,0 +1,26 @@
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  merchantId  Int?
+  action      String
+  resource    String
+  resourceId  String?
+  status      String?
+  amount      Float?
+  description String?
+  changes     Json?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user     User?     @relation(fields: [userId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([action])
+  @@index([resource])
+  @@index([status])
+  @@index([createdAt])
+}

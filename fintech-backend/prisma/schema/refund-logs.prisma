@@ -1,0 +1,17 @@
+model RefundLog {
+  id              Int          @id @default(autoincrement())
+  refundId        Int
+  action          String
+  statusBefore    RefundStatus?
+  statusAfter     RefundStatus?
+  description     String?
+  metadata        Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime     @default(now())
+  
+  refund          Refund       @relation(fields: [refundId], references: [id])
+  
+  @@index([refundId])
+  @@index([createdAt])
+}

@@ -1,0 +1,12 @@
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  resource    String
+  action      String
+  createdAt   DateTime @default(now())
+
+  userPermissions UserPermission[]
+
+  @@unique([resource, action])
+}

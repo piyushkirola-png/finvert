@@ -1,0 +1,28 @@
+model Gateway {
+  id             Int      @id @default(autoincrement())
+  name           String
+  serviceType    GatewayServiceType @default(PAY_IN)
+  websiteUrl     String?
+  logoUrl        String?
+  contactName    String?
+  contactPhone   String?
+  contactEmail   String?
+  isActive       Boolean  @default(true)
+  config         Json?  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  gatewayMerchantMappings GatewayMerchantMapping[] 
+  merchantRates   MerchantRate[]
+  payInRequests   PayInRequest[]
+  payOutRequests  PayOutRequest[]
+  inboundLogs     InboundLog[]
+  outboundLogs    OutboundLog[]
+  failureLogs     GatewayFailureLog[]
+  merchantPriorities MerchantGatewayPriority[]
+  chargebacks     Chargeback[]
+  refunds         Refund[]
+
+  @@index([isActive])
+  @@index([name])
+}

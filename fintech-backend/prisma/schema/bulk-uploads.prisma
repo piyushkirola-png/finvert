@@ -1,0 +1,29 @@
+model BulkUpload {
+  id              Int      @id @default(autoincrement())
+  merchantId      Int
+  userId          Int
+  fileName        String
+  fileUrl         String?
+  totalRows       Int      @default(0)
+  successRows     Int      @default(0)
+  failedRows      Int      @default(0)
+  status          BulkUploadStatus @default(PENDING)
+  mode            String   @default("instant")
+  type            String
+  errorReport     Json?
+  upiIntentFileUrl String?
+  upiIntentCount   Int?    @default(0)
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  merchant        Merchant @relation(fields: [merchantId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+  scheduledTasks  ScheduledTask[] 
+
+  @@index([merchantId, status])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([type])
+  @@index([merchantId, createdAt])
+}

@@ -1,0 +1,42 @@
+model Refund {
+  id                      Int            @id @default(autoincrement())
+  payInRequestId          Int
+  merchantId              Int
+  amount                  Decimal        @db.Decimal(15, 2)
+  currency                String         @default("INR")
+  refundType              RefundType     @default(FULL)
+  status                  RefundStatus   @default(PENDING)
+  reason                  String?
+  gatewayId               Int
+  gatewayRefundId         String?        @unique
+  refundFee               Decimal?       @db.Decimal(15, 2)
+  adjustmentAmount        Decimal?       @db.Decimal(15, 2)
+  walletDebitTransactionId Int?          @unique
+  initiatedAt             DateTime       @default(now())
+  processedAt             DateTime?
+  completedAt             DateTime?
+  failedAt                DateTime?
+  cancelledAt             DateTime?
+  failureReason           String?
+  failureCode             String?
+  retryCount              Int            @default(0)
+  lastRetryAt             DateTime?
+  createdBy               String?
+  updatedBy               String?
+  notes                   String?
+  metadata                Json?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  
+  payInRequest            PayInRequest   @relation(fields: [payInRequestId], references: [id])
+  merchant                Merchant       @relation(fields: [merchantId], references: [id])
+  gateway                 Gateway        @relation(fields: [gatewayId], references: [id])
+  payInWalletTransaction  PayInWallet?   @relation("RefundWalletDebit", fields: [walletDebitTransactionId], references: [id])
+  logs                    RefundLog[]
+  
+  @@index([payInRequestId])
+  @@index([merchantId])
+  @@index([gatewayId])
+  @@index([status])
+  @@index([createdAt])
+}

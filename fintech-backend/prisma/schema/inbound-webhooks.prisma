@@ -1,0 +1,25 @@
+model InboundLog {
+  id              Int               @id @default(autoincrement())
+  eventId         String?
+  gatewayId       Int?
+  merchantId      Int?
+  eventType       WebhookEventType?
+  processedAt     DateTime?
+  requestBody     Json?
+  requestHeaders  Json?
+  responseBody    Json?
+  responseHeaders Json?
+  status          WebhookStatus?
+  responseStatus  Int?
+  utr             String?
+  amount          Decimal?          @db.Decimal(15, 2)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  gateway  Gateway?  @relation(fields: [gatewayId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+
+  @@index([gatewayId])
+  @@index([merchantId])
+  @@index([createdAt])
+}

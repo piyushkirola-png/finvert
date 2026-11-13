@@ -1,0 +1,17 @@
+model MerchantDocument {
+  id         Int     @id @default(autoincrement())
+  merchantId Int
+  type       String
+  customName String?
+  fileUrl    String
+  fileName   String?
+  fileType   String?
+  status     String  @default("PENDING")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([merchantId, type, customName])
+}

@@ -1,0 +1,41 @@
+model User {
+  id                  Int      @id @default(autoincrement())
+  email               String   @unique
+  hashedPassword      String
+  fullName            String
+  phoneNumber         String?
+  isActive            Boolean  @default(true)
+  emailVerified       Boolean  @default(false)
+  role                Role     @default(USER)
+  merchantId          Int?
+  mfaEnabled          Boolean  @default(false)
+  mfaMethod           String?
+  mfaSecret           String?
+  failedLoginAttempts Int      @default(0)
+  lastLoginAt         DateTime?
+  passwordChangedAt   DateTime?
+  otp                 String?
+  otpExpiry           DateTime?
+  defaultCurrency     String   @default("INR")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  merchant            Merchant?              @relation(fields: [merchantId], references: [id])
+  sessions            UserSession[]
+  permissions         UserPermission[]
+  riskBlocksCreated   RiskBlock[] @relation("RiskBlockCreatedBy")
+  passwordResets      PasswordReset[]
+  auditLogs           AuditLog[]
+  payInRequests       PayInRequest[]
+  payInWallets        PayInWallet[]
+  payInWalletSummaries PayInWalletSummary[]
+  payOutRequests PayOutRequest[]
+  payOutWallets       PayOutWallet[]
+  payOutWalletSummary PayOutWalletSummary[]
+  settlements         Settlement[]
+  csvExports          CsvExport[]
+  bulkUploads         BulkUpload[]
+
+  @@index([merchantId])
+  @@index([email])
+}

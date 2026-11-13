@@ -1,0 +1,76 @@
+model Merchant {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  phone    String?
+  isActive Boolean @default(true)
+  secretKey String @unique
+  webhookUrl    String?
+  webhookSecret String?
+  callbackUrl   String?
+  redirectUrl   String?
+  clientId     String?
+  clientSecret String?
+  onboardingToken   String?   @unique
+  ipWhitelist String[] @default([])
+  payInLien  Decimal @default(0) @db.Decimal(15, 2)
+  payOutLien Decimal @default(0) @db.Decimal(15, 2)
+  businessName String?
+  businessType String?
+  websiteUrl   String?
+  gstin        String?
+  bankName           String?
+  accountNumber      String?
+  ifscCode           String?
+  settlementCurrency String? @default("INR")
+  webhookConfig Json?
+  paymentMethods Json?
+  status String @default("ACTIVE")
+  planType              String    @default("BASIC")
+  bulkUploadEnabled     Boolean   @default(false)
+  contactPerson      String?
+  businessPhone      String?
+  businessEmail      String?
+  businessAddress    String?
+  city               String?
+  state              String?
+  pinCode            String?
+  zone               String?
+  panNumber          String?
+  nameAsPerPan       String?
+  incorporationDate  String?
+  gstStatus          String?
+  merchantCategory   String?
+  annualTurnover     String?
+  operatingCountry   String?
+  numberOfEmployees  String?
+  bankAccountType    String?
+  bankAccountName    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs               AuditLog[]
+  users                   User[]
+  merchantRates           MerchantRate[]
+  merchantDocuments       MerchantDocument[]
+  payInWallets            PayInWallet[]
+  payOutWallets           PayOutWallet[]
+  payInRequests           PayInRequest[]
+  payOutRequests          PayOutRequest[]
+  payInWalletSummary      PayInWalletSummary[]
+  payOutWalletSummary     PayOutWalletSummary[]
+  settlements             Settlement[]
+  webhookOutbound         OutboundLog[]
+  webhookInbound          InboundLog[]
+  csvExports              CsvExport[]
+  gatewayMerchantMappings GatewayMerchantMapping[]
+  routingPreference       MerchantRoutingPreference?
+  chargebacks             Chargeback[]
+  refunds                 Refund[]
+  bulkUploads             BulkUpload[]
+  scheduledTasks          ScheduledTask[]
+
+  @@index([status])
+  @@index([createdAt])
+}

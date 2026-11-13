@@ -1,0 +1,31 @@
+model PayInWallet {
+  id              Int             @id @default(autoincrement())
+  merchantId      Int
+  userId          Int?
+  amount          Decimal         @db.Decimal(15, 2)
+  type            TransactionType
+  description     String
+  transactionId   String?         @unique
+  referenceId     String?
+  transactionDate DateTime
+  openingBalance  Decimal         @db.Decimal(15, 2)
+  closingBalance  Decimal         @db.Decimal(15, 2)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant                Merchant          @relation(fields: [merchantId], references: [id])
+  user                    User?             @relation(fields: [userId], references: [id])
+  payInRequest            PayInRequest?     @relation("PayInWalletRelation")
+  chargebackDebit         Chargeback?       @relation("ChargebackWalletDebit")
+  chargebackCredit        Chargeback?       @relation("ChargebackWalletCredit")
+  refundDebit             Refund?           @relation("RefundWalletDebit")
+
+  @@index([merchantId])
+  @@index([userId])
+  @@index([transactionId])
+  @@index([referenceId])
+  @@index([merchantId, userId, createdAt])
+  @@index([transactionDate])
+  @@index([merchantId, transactionDate])
+  @@index([merchantId, userId, transactionDate])
+}

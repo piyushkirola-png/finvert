@@ -1,0 +1,14 @@
+model UserPermission {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  permissionId Int
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
+
+  user       User       @relation(fields: [userId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+}
