@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import AppSidebar from "../sidebar/AppSidebar";
+import SessionTimer from "../ui/SessionTimer";
 
 export default function MainLayout() {
   return (
@@ -12,6 +13,7 @@ export default function MainLayout() {
           </div>
         </main>
       </div>
+      <SessionTimer />
     </div>
   );
 }

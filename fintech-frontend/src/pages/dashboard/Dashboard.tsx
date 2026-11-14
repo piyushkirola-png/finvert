@@ -20,7 +20,6 @@ import type {
   User,
 } from "../../types/dashboard";
 import type { DateFilters } from "./DashboardFilters";
-import SessionTimer from "../../components/ui/SessionTimer";
 
 export type DashboardFiltersWithDate = DashboardFiltersType & DateFilters;
 
@@ -173,8 +172,6 @@ export default function Dashboard() {
         transactions={transactions}
         loading={transactionsLoading}
       />
-
-      <SessionTimer />
     </div>
   );
 }

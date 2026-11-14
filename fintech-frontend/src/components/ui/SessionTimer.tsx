@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 import { useAuth, SESSION_TIMEOUT_MS } from "../context/AuthContext";
 
-/**
- * Floating session timer — shows remaining idle time as MM:SS.
- * Lives only where it's rendered (Dashboard). Ticks every second.
- */
 export default function SessionTimer() {
   const { user, lastActivityAt } = useAuth();
-  const [remainingMs, setRemainingMs] = useState<number>(SESSION_TIMEOUT_MS);
+  const [remainingMs, setRemainingMs] = useState<number>(() =>
+    Math.max(0, SESSION_TIMEOUT_MS - (Date.now() - lastActivityAt)),
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -19,9 +17,18 @@ export default function SessionTimer() {
       setRemainingMs(left);
     };
 
-    compute(); // immediate
+    compute();
     const id = setInterval(compute, 1000);
-    return () => clearInterval(id);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") compute();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [user, lastActivityAt]);
 
   if (!user) return null;

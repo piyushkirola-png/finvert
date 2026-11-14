@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -15,6 +16,7 @@ import type { AuthUser, LoginPayload, Role } from "../../types/auth";
 const TOKEN_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
 const USER_KEY = "user";
+const LAST_ACTIVITY_KEY = "lastActivityAt";
 
 /** 30 minutes of inactivity triggers logout */
 export const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -42,6 +44,18 @@ function readStoredUser(): AuthUser | null {
   }
 }
 
+/** hydrate lastActivityAt from localStorage, or default to now */
+function readStoredLastActivity(): number {
+  try {
+    const raw = localStorage.getItem(LAST_ACTIVITY_KEY);
+    if (!raw) return Date.now();
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : Date.now();
+  } catch {
+    return Date.now();
+  }
+}
+
 function isExpired(token: string): boolean {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
@@ -54,27 +68,50 @@ function isExpired(token: string): boolean {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<AuthUser | null>(readStoredUser);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastActivityAt, setLastActivityAt] = useState<number>(Date.now());
 
-  // Validate stored token on mount
+  const [lastActivityAt, setLastActivityAt] = useState<number>(
+    readStoredLastActivity,
+  );
+
+  const didInitialExpiryCheck = useRef(false);
+
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token || isExpired(token)) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(REFRESH_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
       setUserState(null);
+      return;
+    }
+
+    if (!didInitialExpiryCheck.current) {
+      didInitialExpiryCheck.current = true;
+      const stored = readStoredLastActivity();
+      if (Date.now() - stored > SESSION_TIMEOUT_MS) {
+        void logoutService().catch(() => { });
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+        setUserState(null);
+      }
     }
   }, []);
 
   const setUser = useCallback((next: AuthUser) => {
     setUserState(next);
     localStorage.setItem(USER_KEY, JSON.stringify(next));
-    setLastActivityAt(Date.now()); // fresh session starts now
+    const now = Date.now();
+    setLastActivityAt(now);
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
   }, []);
 
   const touchSession = useCallback(() => {
-    setLastActivityAt(Date.now());
+    const now = Date.now();
+    setLastActivityAt(now);
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
   }, []);
 
   const login = useCallback(
@@ -99,14 +136,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await logoutService();
+    await logoutService().catch(() => { });
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(LAST_ACTIVITY_KEY);
     setUserState(null);
   }, []);
 
-  // Track user activity — resets the idle timer
   useEffect(() => {
     if (!user) return;
 
@@ -120,9 +157,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ];
 
     let last = 0;
-    const handler = () => {
+    const handler = (e: Event) => {
+      if (
+        e instanceof KeyboardEvent &&
+        (e.key === "F5" ||
+          ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r"))
+      ) {
+        return;
+      }
       const now = Date.now();
-      // throttle: at most one bump per 2 seconds
       if (now - last > 2000) {
         last = now;
         touchSession();
@@ -132,11 +175,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     events.forEach((e) =>
       window.addEventListener(e, handler, { passive: true }),
     );
-    document.addEventListener("visibilitychange", handler);
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LAST_ACTIVITY_KEY && e.newValue) {
+        const n = Number(e.newValue);
+        if (Number.isFinite(n)) setLastActivityAt(n);
+      }
+      if (e.key === USER_KEY && !e.newValue) {
+        setUserState(null);
+      }
+    };
+    window.addEventListener("storage", onStorage);
 
     return () => {
       events.forEach((e) => window.removeEventListener(e, handler));
-      document.removeEventListener("visibilitychange", handler);
+      window.removeEventListener("storage", onStorage);
     };
   }, [user, touchSession]);
 
@@ -146,16 +199,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const remaining = SESSION_TIMEOUT_MS - (Date.now() - lastActivityAt);
     if (remaining <= 0) {
-      logout();
+      void logout();
       return;
     }
 
     const timer = setTimeout(() => {
-      logout();
+      void logout();
     }, remaining);
 
     return () => clearTimeout(timer);
   }, [user, lastActivityAt, logout]);
+
+  useEffect(() => {
+    if (!user) return;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      const stored = readStoredLastActivity();
+      if (Date.now() - stored > SESSION_TIMEOUT_MS) {
+        void logout();
+      } else {
+        setLastActivityAt(stored);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [user, logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
