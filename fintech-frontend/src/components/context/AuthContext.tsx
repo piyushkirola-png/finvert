@@ -11,6 +11,7 @@ import {
   login as loginService,
   logout as logoutService,
 } from "../../api/services/authService";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AuthUser, LoginPayload, Role } from "../../types/auth";
 
 const TOKEN_KEY = "accessToken";
@@ -66,6 +67,7 @@ function isExpired(token: string): boolean {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUserState] = useState<AuthUser | null>(readStoredUser);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -103,15 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setUser = useCallback((next: AuthUser) => {
     setUserState(next);
     localStorage.setItem(USER_KEY, JSON.stringify(next));
-    const now = Date.now();
-    setLastActivityAt(now);
-    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
   }, []);
 
   const touchSession = useCallback(() => {
-    const now = Date.now();
-    setLastActivityAt(now);
-    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
   }, []);
 
   const login = useCallback(
@@ -127,6 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken);
         const merged: AuthUser = { ...apiUser, role };
         setUser(merged);
+        const now = Date.now();
+        setLastActivityAt(now);
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
         return merged;
       } finally {
         setIsLoading(false);
@@ -141,57 +140,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(LAST_ACTIVITY_KEY);
+    queryClient.clear();
     setUserState(null);
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     if (!user) return;
-
-    const events: (keyof WindowEventMap)[] = [
-      "mousemove",
-      "mousedown",
-      "keydown",
-      "scroll",
-      "touchstart",
-      "click",
-    ];
-
-    let last = 0;
-    const handler = (e: Event) => {
-      if (
-        e instanceof KeyboardEvent &&
-        (e.key === "F5" ||
-          ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r"))
-      ) {
-        return;
-      }
-      const now = Date.now();
-      if (now - last > 2000) {
-        last = now;
-        touchSession();
-      }
-    };
-
-    events.forEach((e) =>
-      window.addEventListener(e, handler, { passive: true }),
-    );
-
+    
     const onStorage = (e: StorageEvent) => {
       if (e.key === LAST_ACTIVITY_KEY && e.newValue) {
         const n = Number(e.newValue);
         if (Number.isFinite(n)) setLastActivityAt(n);
       }
       if (e.key === USER_KEY && !e.newValue) {
+        queryClient.clear();
         setUserState(null);
       }
     };
     window.addEventListener("storage", onStorage);
 
     return () => {
-      events.forEach((e) => window.removeEventListener(e, handler));
       window.removeEventListener("storage", onStorage);
     };
-  }, [user, touchSession]);
+  }, [user, queryClient]);
 
   // Auto-logout when idle timeout reached
   useEffect(() => {

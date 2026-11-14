@@ -158,36 +158,33 @@ export default function Profile() {
               View and manage your account information
             </p>
           </div>
+          <span
+            className={`${BADGE} ${BADGE_COLORS[isActive ? "green" : "red"]}`}
+          >
+            {isActive ? "ACTIVE" : "INACTIVE"}
+          </span>
         </div>
 
         {/* Hero */}
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600" />
-          <div className="px-6 pb-6">
-            <div className="flex items-end justify-between -mt-10 gap-4">
-              <div className="flex items-end gap-4 min-w-0">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg border border-slate-200 overflow-hidden">
+          <div className="px-6 py-8">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 <div className="w-20 h-20 rounded-full bg-white p-1 shadow-md flex-shrink-0">
                   <div className="w-full h-full rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold text-white">
                     {fullName?.charAt(0)?.toUpperCase() || "A"}
                   </div>
                 </div>
-                <div className="pb-1 min-w-0">
-                  <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-1.5">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-white flex items-center gap-1.5">
                     {fullName}
-                    <CheckCircle size={16} className="text-blue-600" />
+                    <CheckCircle size={16} className="text-blue-100" />
                   </h2>
-                  <p className="text-sm text-slate-500 truncate">
+                  <p className="text-sm text-blue-100 truncate">
                     {user.email}
                   </p>
                 </div>
               </div>
-              <span
-                className={`${BADGE} ${
-                  BADGE_COLORS[isActive ? "green" : "red"]
-                } flex-shrink-0`}
-              >
-                {isActive ? "ACTIVE" : "INACTIVE"}
-              </span>
             </div>
           </div>
         </div>

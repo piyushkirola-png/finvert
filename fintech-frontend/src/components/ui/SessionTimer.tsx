@@ -49,7 +49,7 @@ export default function SessionTimer() {
   return (
     <div
       className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-4 py-2 shadow-lg ${tone}`}
-      title="Session expires after 30 minutes of inactivity"
+      title="Session expires 30 minutes after login"
     >
       <Clock size={16} />
       <span className="font-mono text-sm font-semibold tabular-nums">
