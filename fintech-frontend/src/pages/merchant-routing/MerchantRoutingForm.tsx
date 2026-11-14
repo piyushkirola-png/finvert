@@ -165,7 +165,6 @@ export default function MerchantRoutingForm({
         { id: routing.id, data: payload as any },
         {
           onSuccess: () => {
-            toast.success("Routing updated");
             onSuccess();
           },
         },

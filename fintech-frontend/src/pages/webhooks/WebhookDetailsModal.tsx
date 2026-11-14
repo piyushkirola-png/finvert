@@ -25,6 +25,7 @@ const statusColors: Record<string, keyof typeof BADGE_COLORS> = {
   SUCCESS: "green",
   FAILED: "red",
   PENDING: "yellow",
+  PROCESSING: "yellow",
   ACKNOWLEDGED: "purple",
 };
 

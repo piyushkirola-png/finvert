@@ -16,8 +16,7 @@ import {
 const STATUS_MAP: Record<string, keyof typeof BADGE_COLORS> = {
   COMPLETED: "green",
   FAILED: "red",
-  PENDING: "yellow",
-  PROCESSING: "blue",
+  PROCESSING: "yellow",
 };
 
 export default function CSVExport() {

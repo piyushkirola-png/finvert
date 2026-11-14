@@ -1,6 +1,30 @@
 const payinPlaygroundService = require("./api-playground.service");
 const { validationResult } = require("express-validator");
 
+const extractUpiIntent = (raw) => {
+  if (!raw) return "";
+
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("upi://")) return trimmed;
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return extractUpiIntent(parsed);
+    } catch {
+      return "";
+    }
+  }
+  
+  if (typeof raw === "object") {
+    const candidate =
+      raw.qr_intent ?? raw.qrIntent ?? raw.intent ?? raw.upiIntent ?? null;
+    if (candidate && candidate !== raw) return extractUpiIntent(candidate);
+  }
+
+  return "";
+};
+
 const createPlaygroundPayin = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -30,11 +54,15 @@ const createPlaygroundPayin = async (req, res) => {
       req.user
     );
 
-    // Your real service returns the intent string for UPI
-    const upiIntent = result.intent || "";
-    
-    // Generate QR Base64 URL using a QR code library (see frontend notes)
-    // For the backend, we just return the raw data.
+    const upiIntent = extractUpiIntent(result?.intent ?? result?.qr_intent);
+
+    if (!upiIntent) {
+      console.warn(
+        "[Playground Payin] Could not extract UPI intent. Raw result.intent:",
+        result?.intent
+      );
+    }
+
     return res.status(201).json({
       success: true,
       data: {
@@ -42,8 +70,8 @@ const createPlaygroundPayin = async (req, res) => {
         merchantReference: result.merchantReference,
         status: result.status,
         amount: result.amount,
-        intent: upiIntent, 
-      }
+        intent: upiIntent,
+      },
     });
   } catch (error) {
     console.error("Playground Payin Error:", error);

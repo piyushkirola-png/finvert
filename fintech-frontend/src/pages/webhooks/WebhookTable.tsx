@@ -48,7 +48,7 @@ interface Props {
   onRetry?: (id: number) => void;
   isRetrying?: boolean;
   emptyText: string;
-  /** Fetch a single webhook's full body (request/response) on demand */
+  
   onFetchPayload?: (
     id: number,
     kind: "requestBody" | "responseBody",
@@ -58,7 +58,7 @@ interface Props {
 const statusColors: Record<string, keyof typeof BADGE_COLORS> = {
   SUCCESS: "green",
   FAILED: "red",
-  PENDING: "yellow",
+  PROCESSING: "yellow",
   ACKNOWLEDGED: "purple",
 };
 

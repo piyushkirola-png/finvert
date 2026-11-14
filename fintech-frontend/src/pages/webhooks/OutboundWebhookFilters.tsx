@@ -56,8 +56,8 @@ export default function OutboundWebhookFilters({
 
   useEffect(() => {
     if (isFiltersVisible) setTempFilters(filters);
-  }, [isFiltersVisible]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [isFiltersVisible]);
+  
   const handleApply = () => {
     setFilters(tempFilters);
     setIsFiltersVisible(false);
